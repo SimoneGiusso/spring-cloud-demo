@@ -40,6 +40,13 @@
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-stream</artifactId>
         </dependency>
+        <!-- This for the rabbit binder. In case of multiple binders see https://docs.spring.io/spring-cloud-stream/reference/spring-cloud-stream/multiple-binders.html
+             If you have multiple brokers of the same type check https://docs.spring.io/spring-cloud-stream/reference/spring-cloud-stream/multiple-systems.html
+        -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-stream-binder-rabbit</artifactId>
+        </dependency>
         <!-- To visualize the current bindings, access the following URL: <host>:<port>/actuator/bindings -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -51,6 +58,7 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- Testing your microservice applications without connecting to a messaging system. -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-stream-test-binder</artifactId>

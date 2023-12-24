@@ -10,9 +10,16 @@ spring:
       output-bindings: toStream # Create explicitly a binding. No need to create a spring cloud function.
       function:
         autodetect: false # Disable auto-discovery of beans to bind to external destination(s) exposed by the bindings (see https://docs.spring.io/spring-cloud-stream/reference/spring-cloud-stream/producing-and-consuming-messages.html#overview Notes)
+        # routing.enabled: true # Enable a special function RoutingFunction which can be used to route messages (see https://docs.spring.io/spring-cloud-stream/reference/spring-cloud-stream/event-routing.html)
+      bindings:
+        concat:
+          consumer:
+            batch-mode: true
+        functionWithError-in-0:
+          error-handler-definition: myErrorHandler # In case a error occurs in functionWithError-in-0, the myErrorHandler is invoked. spring.cloud.stream.default.error-handler-definition=myErrorHandler would set it globally
 
     function:
-      definition: uppercase; reverse; uppercase|reverse # Specifies beans to bind to external destinations. The pipe let you combine multiple function.
+      definition: uppercase; reverse; uppercase|reverse; gather; concat; uppercasePostProcessingFunction; functionWithError # Specifies beans to bind to external destinations.
       bindings:
         uppercase|reverse-in-0: uppercaseAndReverseInput # binding a name. This new name can be used in configurations instead of the original once.
-        uppercase|reverse-out-0: uppercaseAndReverseOutput
+        uppercase|reverse-out-0:

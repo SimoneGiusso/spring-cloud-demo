@@ -3,9 +3,12 @@ package com.simonegiusso.stream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.function.context.PostProcessingFunction;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpStatus;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.ErrorMessage;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -14,6 +17,7 @@ import reactor.core.scheduler.Schedulers;
 import reactor.util.function.Tuple2;
 
 import java.util.Date;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -25,20 +29,23 @@ public class App {
     @Autowired
     private StreamBridge streamBridge;
 
+    private static class Uppercase implements PostProcessingFunction<String, String> {
+
+        @Override
+        public String apply(String input) {
+            return input.toUpperCase();
+        }
+
+        @Override
+        public void postProcess(Message<String> result) {
+            System.out.println("Post processing...");
+        }
+    }
+
     public static void main(String[] args) {
         SpringApplication.run(App.class, args);
     }
 
-    /**
-     * The naming convention used to name input and output bindings is as follows:
-     * <ul>
-     *     <li> input - &lt;functionName&gt; + -in- + &lt;index&gt; </li>
-     *     <li> output - &lt;functionName&gt; + -out- + &lt;index&gt; </li>
-     * </ul>
-     * So if for example you would want to map the input of this function to a remote destination (e.g., topic, queue etc) called "my-topic" you would do so with the following property:
-     * <p>
-     * &emsp; {@code spring.cloud.stream.bindings.uppercase-in-0.destination=my-topic}
-     */
     @Bean
     public Function<String, String> uppercase() {
         return String::toUpperCase;
@@ -103,15 +110,35 @@ public class App {
         streamBridge.send("toStream", body); // it will also initiate creation of output bindings on the first call if it doesn't exist. By default, maximum dynamic binders are set to 10 to avoid memory leaks. It means that after 10 a binding will be deleted and then recreated with then a minor performance degradation.
     }
 
-    /**
-     * It is possible to process and/or product multiple streams
-     */
     @Bean
     public Function<Tuple2<Flux<String>, Flux<Integer>>, Flux<String>> gather() {
         return tuple -> { // the two input bindings will be gather-in-0 and gather-in-1
             Flux<String> stringStream = tuple.getT1();
             Flux<String> intStream = tuple.getT2().map(String::valueOf);
-            return Flux.merge(stringStream, intStream);
+
+            return stringStream.zipWith(intStream).map(input -> input.getT1() + input.getT2());
+        };
+    }
+
+    @Bean
+    public Function<List<String>, String> concat() {
+        return strings -> strings.stream().reduce((s1, s2) -> s1 + s2).orElse("");
+    }
+
+    @Bean
+    public Function<String, String> uppercasePostProcessingFunction() {
+        return new Uppercase();
+    }
+
+    @Bean
+    public Consumer<ErrorMessage> myErrorHandler() {
+        return v -> System.out.println("Error detected!");
+    }
+
+    @Bean
+    public Function<String, String> functionWithError() {
+        return input -> {
+            throw new RuntimeException();
         };
     }
 

@@ -28,5 +28,22 @@ class BootTestStreamApplicationTests {
         assertThat(output.receive().getPayload()).isEqualTo("HELLO".getBytes());
     }
 
+    /**
+     * Set specific configuration for testing
+     */
+    /*
+    @Test
+    public void sampleTest() {
+        try (ConfigurableApplicationContext context = new SpringApplicationBuilder(
+            TestChannelBinderConfiguration.getCompleteConfiguration(
+                MyTestConfiguration.class))
+            .run("--spring.cloud.function.definition=uppercase")) {
+            InputDestination source = context.getBean(InputDestination.class);
+            OutputDestination target = context.getBean(OutputDestination.class);
+            source.send(new GenericMessage<byte[]>("hello".getBytes()));
+            assertThat(target.receive().getPayload()).isEqualTo("HELLO".getBytes());
+        }
+    }
+     */
 
 }
